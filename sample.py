@@ -1,5 +1,6 @@
 import os
 import sys
+import sys
 from dotenv import load_dotenv
 
 # Add project root to path (for telewrap import)
@@ -24,6 +25,29 @@ def main():
     
     print(f"Successfully initialized bot: {bot.name}")
     print(f"Token: {bot.token}")
+
+    # Define a test handler to verify send_message
+    async def test_command(chat_id, text):
+        print(f"Received /test command from {chat_id}")
+        await bot.send_message(chat_id=chat_id, text=f"Hello! This is a test message from {bot.name}.")
+
+    # Add the handler to the bot's application
+    bot.add_command("test", test_command)
+    print("Added /test command. Send /test to the bot to verify send_message functionality.")
+
+    # Define a broadcast handler to verify notify_users
+    async def broadcast_command(chat_id, text):
+        # In a real app, 'text' would contain the command and args, we might want to split
+        # validation logic is skipped for simplicity
+        message_to_send = text.replace("/broadcast", "").strip() or "Default Broadcast Message"
+        print(f"Broadcasting message: {message_to_send}")
+        await bot.notify_users(f"Alert: {message_to_send}")
+
+    bot.add_command("broadcast", broadcast_command)
+    print("Added /broadcast command. Send /broadcast <message> to the bot to verify notification.")
+    
+    # Start the bot
+    bot.run()
 
 if __name__ == "__main__":
     main()
