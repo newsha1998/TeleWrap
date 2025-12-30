@@ -12,16 +12,18 @@ logger = logging.getLogger(__name__)
 
 
 class Bot:
-    def __init__(self, token: str, name: str):
+    def __init__(self, token: str, name: str, maintainers: list[int] = None):
         """
         Initialize the Bot.
 
         Args:
             token (str): The token of the bot.
             name (str): The name of the bot.
+            maintainers (list[int]): List of user IDs who are maintainers.
         """
         self.token = token
         self.name = name
+        self.maintainers = set(maintainers) if maintainers else set()
         self.subscribers = set()
 
         self.application = ApplicationBuilder().token(self.token).build()
@@ -57,7 +59,7 @@ class Bot:
             except Exception as e:
                 logger.error(f"Failed to send message to {chat_id}: {e}")
 
-    def add_command(self, command: str, func):
+    def add_command(self, command: str, func, restricted: bool = False):
         """
         Add a command handler to the bot.
 
@@ -65,10 +67,16 @@ class Bot:
             command (str): The command name (e.g. 'start').
             func (Callable): The function to call when the command is received.
                              It should accept (chat_id, text) as arguments.
+            restricted (bool): If True, only maintainers can use this command.
         """
         async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id = update.effective_chat.id
             text = update.message.text
+            
+            if restricted and chat_id not in self.maintainers:
+                await context.bot.send_message(chat_id=chat_id, text="You are not authorized to use this command.")
+                return
+
             await func(chat_id, text)
 
         handler = CommandHandler(command, wrapper)

@@ -20,8 +20,12 @@ def main():
         print("Please create a .env file with TELEGRAM_BOT_TOKEN=your_token_here")
         return
 
+    maintainers_str = os.getenv("MAINTAINER_IDS", "")
+    maintainers = [int(x.strip()) for x in maintainers_str.split(",") if x.strip().isdigit()]
+    
     print(f"Initializing bot '{name}' with token from environment...")
-    bot = Bot(token=token, name=name)
+    print(f"Maintainers: {maintainers}")
+    bot = Bot(token=token, name=name, maintainers=maintainers)
     
     print(f"Successfully initialized bot: {bot.name}")
     print(f"Token: {bot.token}")
@@ -43,8 +47,15 @@ def main():
         print(f"Broadcasting message: {message_to_send}")
         await bot.notify_users(f"Alert: {message_to_send}")
 
-    bot.add_command("broadcast", broadcast_command)
+    bot.add_command("broadcast", broadcast_command, restricted=True)
     print("Added /broadcast command. Send /broadcast <message> to the bot to verify notification.")
+
+    # Define a handler to get user ID
+    async def get_id_command(chat_id, text):
+        await bot.send_message(chat_id=chat_id, text=f"Your User ID is: {chat_id}")
+
+    bot.add_command("id", get_id_command)
+    print("Added /id command. Send /id to get your user ID.")
     
     # Start the bot
     bot.run()
